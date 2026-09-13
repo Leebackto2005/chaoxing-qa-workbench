@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 from typing import Optional
 
-from config import validate_target
+from config import available_browsers, docker_mode_enabled, validate_target
 
 
 class BrowserManager:
@@ -25,6 +25,12 @@ class BrowserManager:
         validate_target(self.settings.base_url, self.settings)
         if self.settings.target_mode == "official" and self.settings.headless:
             raise ValueError("官方测试模式需要可见浏览器，HEADLESS 必须为 false")
+        if self.settings.browser not in available_browsers():
+            if docker_mode_enabled():
+                raise ValueError("当前 Docker 环境只支持镜像内置 Chromium")
+            raise ValueError("浏览器只支持 chrome、edge 或 firefox")
+        if docker_mode_enabled() and not self.settings.headless:
+            raise ValueError("Docker 环境只支持无头 Chromium；官方可见测试请使用宿主机浏览器")
 
         if self.settings.browser == "chrome":
             options = webdriver.ChromeOptions()

@@ -1,14 +1,21 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 from dataclasses import replace
 from pathlib import Path
 
-from config import load_settings, validate_local_target, validate_target
+from config import available_browsers, load_settings, validate_local_target, validate_target
 from src.course import Course, ProgressStore
 from src.official_test import OfficialTestRunner
 
 
 class SmokeTests(unittest.TestCase):
+    def test_docker_exposes_only_bundled_browser(self):
+        with patch.dict("os.environ", {"DOCKER_MODE": "true"}):
+            self.assertEqual(available_browsers(), ("chrome",))
+        with patch.dict("os.environ", {"DOCKER_MODE": "false"}):
+            self.assertEqual(available_browsers(), ("chrome", "edge", "firefox"))
+
     def test_external_target_is_rejected(self):
         with self.assertRaises(ValueError):
             validate_local_target("https://www.chaoxuexi.com")

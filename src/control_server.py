@@ -11,7 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Callable, Dict, Tuple
 
-from config import validate_target
+from config import available_browsers, docker_mode_enabled, validate_target
 from src.mock_platform import COURSES
 
 
@@ -102,7 +102,9 @@ class RunController:
         base_url = str(payload.get("base_url") or default_url).strip().rstrip("/")
 
         browser = str(payload.get("browser") or self.settings.browser).strip().lower()
-        if browser not in {"chrome", "edge", "firefox"}:
+        if browser not in available_browsers():
+            if docker_mode_enabled():
+                raise ValueError("Docker 环境只支持镜像内置 Chromium")
             raise ValueError("浏览器只支持 chrome、edge 或 firefox")
 
         headless = payload.get("headless", self.settings.headless)
@@ -191,6 +193,8 @@ class RunController:
         validate_target(base_url, run_settings)
         if target_mode == "official" and headless:
             raise ValueError("官方测试需要可见浏览器，请关闭无头运行")
+        if target_mode == "official" and docker_mode_enabled():
+            raise ValueError("Docker 环境只支持本地无头回归；官方可见测试请使用宿主机浏览器")
         return run_settings
 
     def _execute(self, settings) -> None:
@@ -302,6 +306,8 @@ class ControlHandler(BaseHTTPRequestHandler):
                 "allow_official_test": settings.allow_official_test,
                 "password_configured": bool(settings.password),
                 "browser": settings.browser,
+                "available_browsers": list(available_browsers()),
+                "docker_mode": docker_mode_enabled(),
                 "headless": settings.headless,
                 "lesson_seconds": settings.lesson_seconds,
                 "playback_minutes": settings.playback_minutes,

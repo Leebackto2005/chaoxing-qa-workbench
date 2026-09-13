@@ -7,6 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     TZ=Asia/Shanghai \
     TEST_TARGET=local \
     MOCK_SERVER=true \
+    DOCKER_MODE=true \
     CONTROL_HOST=0.0.0.0 \
     BROWSER=chrome \
     HEADLESS=true \
@@ -24,6 +25,7 @@ RUN apt-get update \
         chromium \
         chromium-driver \
         fonts-noto-cjk \
+        gosu \
         tzdata \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /usr/sbin/nologin app
@@ -34,14 +36,14 @@ COPY requirements.txt ./
 RUN python -m pip install -r requirements.txt
 
 COPY . .
-RUN mkdir -p /app/runtime/logs /app/runtime/screenshots \
+RUN chmod 0555 /app/docker-entrypoint.sh \
+    && mkdir -p /app/runtime/logs /app/runtime/screenshots \
     && chown -R app:app /app
-
-USER app
 
 EXPOSE 8787
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/api/status', timeout=3)"]
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["python", "main.py", "ui"]

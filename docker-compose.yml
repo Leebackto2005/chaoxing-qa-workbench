@@ -12,11 +12,12 @@ services:
       CHAOXUN_URL: ${CHAOXUN_URL:-http://127.0.0.1:8765}
       TEST_TARGET: ${TEST_TARGET:-local}
       ALLOW_OFFICIAL_TEST: ${ALLOW_OFFICIAL_TEST:-false}
+      DOCKER_MODE: "true"
       CONTROL_HOST: 0.0.0.0
       OFFICIAL_URL: ${OFFICIAL_URL:-https://v8.chaoxing.com}
       MOCK_SERVER: ${MOCK_SERVER:-true}
-      BROWSER: ${BROWSER:-chrome}
-      HEADLESS: ${HEADLESS:-true}
+      BROWSER: chrome
+      HEADLESS: "true"
       BROWSER_TIMEOUT: ${BROWSER_TIMEOUT:-30}
       LESSON_SECONDS: ${LESSON_SECONDS:-1.0}
       PLAYBACK_MINUTES: ${PLAYBACK_MINUTES:-10.0}

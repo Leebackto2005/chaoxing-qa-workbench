@@ -84,14 +84,14 @@ Docker 镜像已经包含 Python 3.12、Selenium、Chromium、ChromiumDriver 和
 
 ```bash
 cp .env.docker.example .env
-docker compose up --build -d
+docker compose up --build -d --wait --wait-timeout 60
 ```
 
 Windows PowerShell 可使用：
 
 ```powershell
 Copy-Item .env.docker.example .env
-docker compose up --build -d
+docker compose up --build -d --wait --wait-timeout 60
 ```
 
 打开 `http://127.0.0.1:8787`，查看容器状态和日志：
@@ -104,10 +104,12 @@ docker compose logs -f workbench
 首次启动后可运行一次容器内自检：
 
 ```bash
+docker compose run --rm --no-deps workbench python -c "import os; from pathlib import Path; assert os.geteuid() != 0; p=Path('/app/runtime/.permission-check'); p.touch(); p.unlink()"
 docker compose run --rm --no-deps workbench python main.py self-test
+docker compose run --rm --no-deps workbench python main.py run
 ```
 
-运行数据会保存在项目的 `runtime/` 目录中，包括日志、截图、`progress.json` 和 `playback_report.json`。账号密码只通过 `.env` 或运行时环境传入，不会写进镜像；`.env` 已被 Git 忽略。Docker 默认使用本地模拟平台、Chromium 和无头模式。官方授权测试需要人工完成验证码，默认容器没有可见桌面，建议在宿主机使用 Edge/Chrome 的可见模式运行；如确实需要容器内可见浏览器，需要另外接入受控的显示或 VNC 环境。
+入口会在启动时创建并修复 `runtime/` 的属主，然后以非 root 用户运行 Python；上面的权限检查会验证该目录可写。运行数据会保存在项目的 `runtime/` 目录中，包括日志、截图、`progress.json` 和 `playback_report.json`。账号密码只通过 `.env` 或运行时环境传入，不会写进镜像；`.env` 已被 Git 忽略。Docker 默认使用本地模拟平台、镜像内置 Chromium 和无头模式。官方授权测试需要人工完成验证码，使用宿主机 Edge/Chrome 的可见模式运行。
 
 停止容器但保留 `runtime/` 数据：
 

@@ -29,6 +29,14 @@ def _as_bool(value: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def docker_mode_enabled() -> bool:
+    return _as_bool(os.getenv("DOCKER_MODE", "false"))
+
+
+def available_browsers() -> Tuple[str, ...]:
+    return ("chrome",) if docker_mode_enabled() else ("chrome", "edge", "firefox")
+
+
 @dataclass(frozen=True)
 class Settings:
     username: str

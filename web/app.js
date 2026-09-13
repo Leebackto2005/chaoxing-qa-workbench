@@ -19,6 +19,7 @@ const ui = {
   officialPlaybackScope: $("official-playback-scope"),
   officialMaxLessons: $("official-max-lessons"),
   browser: $("browser"),
+  browserHelp: $("browser-help"),
   headless: $("headless"),
   headlessLabel: $("headless-label"),
   durationInput: $("duration-input"),
@@ -152,6 +153,23 @@ function renderCourses(courses, configuredIds, mode = "local") {
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
+}
+
+function configureBrowserOptions(availableBrowsers, dockerMode, configuredBrowser) {
+  const fallback = ["chrome", "edge", "firefox"];
+  const allowed = new Set(Array.isArray(availableBrowsers) && availableBrowsers.length ? availableBrowsers : fallback);
+  const options = [...ui.browser.options];
+  options.forEach((option) => {
+    const enabled = allowed.has(option.value);
+    option.hidden = !enabled;
+    option.disabled = !enabled;
+  });
+  const selected = options.find((option) => allowed.has(option.value) && option.value === configuredBrowser)
+    || options.find((option) => allowed.has(option.value));
+  ui.browser.value = selected ? selected.value : "";
+  ui.browserHelp.textContent = dockerMode
+    ? "Docker 镜像内置 Chromium，容器内固定使用无头模式。"
+    : "可选择 Chrome、Edge 或 Firefox。";
 }
 
 function applyTargetMode() {
@@ -425,9 +443,9 @@ async function bootstrap() {
     ui.username.value = config.username || "";
     ui.targetMode.value = config.target_mode || "local";
     const officialOption = ui.targetMode.querySelector("option[value='official']");
-    if (officialOption) officialOption.disabled = !config.allow_official_test;
-    if (ui.targetMode.value === "official" && !config.allow_official_test) ui.targetMode.value = "local";
-    ui.browser.value = config.browser || "chrome";
+    if (officialOption) officialOption.disabled = !config.allow_official_test || config.docker_mode;
+    if (ui.targetMode.value === "official" && (!config.allow_official_test || config.docker_mode)) ui.targetMode.value = "local";
+    configureBrowserOptions(config.available_browsers, config.docker_mode, config.browser || "chrome");
     ui.headless.checked = Boolean(config.headless);
     ui.durationInput.value = config.target_mode === "official" ? (config.playback_minutes || 10) : (config.lesson_seconds || 1.0);
     ui.officialTaskPoints.value = config.official_task_points || 2;

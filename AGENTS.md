@@ -12,7 +12,7 @@
 
 ## 推荐运行流程
 
-优先使用 Docker。不要先假设本机已经安装了 Python、Selenium 或浏览器。
+优先使用 Docker。不要先假设本机已经安装了 Python、Selenium 或浏览器。Docker 镜像固定使用内置 Chromium 和无头模式，官方可见测试使用宿主机 Edge/Chrome。
 
 ### Windows PowerShell
 
@@ -21,9 +21,12 @@ if (-not (Test-Path .env)) {
     Copy-Item .env.docker.example .env
 }
 docker compose config --quiet
-docker compose up --build -d
+docker compose up --build -d --wait --wait-timeout 60
 docker compose ps
+docker compose run --rm --no-deps workbench python -c "import os; from pathlib import Path; assert os.geteuid() != 0; p=Path('/app/runtime/.permission-check'); p.touch(); p.unlink()"
 docker compose run --rm --no-deps workbench python main.py self-test
+docker compose run --rm --no-deps workbench python main.py run
+if (-not (Test-Path runtime/progress.json)) { throw "runtime/progress.json 未生成" }
 ```
 
 确认服务状态为 `healthy` 后，再打开配置显示的本地地址，默认是：
@@ -41,11 +44,15 @@ docker compose logs -f workbench
 ### Linux/macOS
 
 ```bash
+set -eu
 test -f .env || cp .env.docker.example .env
 docker compose config --quiet
-docker compose up --build -d
+docker compose up --build -d --wait --wait-timeout 60
 docker compose ps
+docker compose run --rm --no-deps workbench python -c "import os; from pathlib import Path; assert os.geteuid() != 0; p=Path('/app/runtime/.permission-check'); p.touch(); p.unlink()"
 docker compose run --rm --no-deps workbench python main.py self-test
+docker compose run --rm --no-deps workbench python main.py run
+test -s runtime/progress.json
 ```
 
 如果 `8787` 已被占用，先保留原进程，不要直接杀进程；在 `.env` 中改成一个空闲端口，例如：
@@ -54,13 +61,13 @@ docker compose run --rm --no-deps workbench python main.py self-test
 UI_PORT=8790
 ```
 
-然后重新执行 `docker compose up --build -d`，访问 `http://127.0.0.1:8790`。
+然后重新执行 `docker compose up --build -d --wait --wait-timeout 60`，访问 `http://127.0.0.1:8790`。
 
 ## 配置规则
 
 - 默认保持 `TEST_TARGET=local`、`MOCK_SERVER=true` 和 `HEADLESS=true`。
 - 账号密码只通过本机 `.env` 或运行时环境变量传入，不能写入 Dockerfile、源代码、提示词、截图或报告。
-- Docker 默认使用内置 Chromium；官方授权测试需要人工验证码和可见浏览器，优先在宿主机使用 Edge/Chrome，不要擅自增加 VNC、代理或反检测组件。
+- Docker 固定使用镜像内置 Chromium 和无头模式；官方授权测试需要人工验证码和可见浏览器，使用宿主机 Edge/Chrome，不要擅自增加 VNC、代理或反检测组件。
 - 不要把官方 URL、真实账号或课程 ID 写死到代码中；需要改变时使用环境变量或控制台配置。
 - 不要用 `schedule` 对官方模式做持续自动播放；官方模式只能执行明确授权的一次性、受限测试会话。
 
@@ -86,17 +93,19 @@ git diff --check
 ```text
 请把当前仓库识别为“学习通流程自动化测试工作台”，先读取根目录 AGENTS.md、README.md 和使用说明.md。
 
-请按以下顺序执行：
+请按以下顺序执行，每一步失败就停止并报告退出码：
 1. 检查 Docker 和 Docker Compose 是否可用；
 2. 如果 .env 不存在，从 .env.docker.example 创建，不覆盖已有 .env；
-3. 保持 TEST_TARGET=local、MOCK_SERVER=true、HEADLESS=true；
+3. 保持 TEST_TARGET=local、MOCK_SERVER=true；Docker 内浏览器固定为 Chromium 无头模式；
 4. 运行 docker compose config --quiet；
-5. 执行 docker compose up --build -d；
+5. 执行 docker compose up --build -d --wait --wait-timeout 60；
 6. 用 docker compose ps 确认 workbench 为 healthy；
-7. 执行 docker compose run --rm --no-deps workbench python main.py self-test；
-8. 自检通过后打开本地控制台，并报告真实退出码、健康状态、地址和日志位置。
+7. 执行 `docker compose run --rm --no-deps workbench python -c "import os; from pathlib import Path; assert os.geteuid() != 0; p=Path('/app/runtime/.permission-check'); p.touch(); p.unlink()"`，确认 runtime 可写且任务进程非 root；
+8. 执行 docker compose run --rm --no-deps workbench python main.py self-test；
+9. 自检通过后执行 docker compose run --rm --no-deps workbench python main.py run，确认 Chromium 实际启动并完成本地模拟课程；
+10. 确认 runtime/progress.json 存在且有内容，再打开本地控制台，并报告真实退出码、健康状态、地址和日志位置。
 
-不要访问外部学习通站点，不要索取或打印真实密码，不要绕过验证码、风控或登录保护，不要把 schedule 用于官方模式持续播放。如果用户明确说明已获授权的专用官方测试，再先说明人工验证码和可见浏览器要求，并保持测试范围有上限；遇到端口占用时不要杀掉已有进程，改用 UI_PORT。修改代码前先检查 git 状态，修改后运行项目测试；除非用户明确要求，不要 push、强制覆盖或删除文件。
+不要访问外部学习通站点，不要索取或打印真实密码，不要绕过验证码、风控或登录保护，不要把 schedule 用于官方模式持续播放。Docker 容器不执行官方可见测试；如果用户明确说明已获授权的专用官方测试，应改用宿主机可见浏览器，并保持测试范围有上限；遇到端口占用时不要杀掉已有进程，改用 UI_PORT。修改代码前先检查 git 状态，修改后运行项目测试；除非用户明确要求，不要 push、强制覆盖或删除文件。
 ```
 
 ## Agent 汇报格式
@@ -109,7 +118,10 @@ git diff --check
 Compose 配置：通过 / 失败
 镜像构建：通过 / 未执行 / 失败
 容器健康：healthy / 其他状态
+目录权限：通过 / 失败（附退出码）
 本地自检：通过 / 失败（附退出码）
+浏览器回归：通过 / 失败（附退出码）
+进度文件：已生成 / 未生成
 控制台地址：...
 运行数据：runtime/（不包含在 Git 提交中）
 官方测试：未执行 / 已获授权且等待人工验证码
