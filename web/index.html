@@ -109,6 +109,22 @@
             </div>
 
             <form id="run-form" novalidate>
+              <div class="quick-start" aria-label="快速开始说明">
+                <div class="quick-start-heading">
+                  <div>
+                    <span class="field-label">QUICK START</span>
+                    <strong>三步开始一次测试</strong>
+                  </div>
+                  <span class="quick-start-tag">默认配置即可</span>
+                </div>
+                <div class="quick-steps">
+                  <div class="quick-step active"><b>1</b><span><strong>填写账号</strong><small>输入测试用户名和密码</small></span></div>
+                  <div class="quick-step"><b>2</b><span><strong>点击开始</strong><small>保持默认参数即可</small></span></div>
+                  <div class="quick-step"><b>3</b><span><strong>人工登录</strong><small>完成验证码后查看报告</small></span></div>
+                </div>
+                <p id="run-summary" class="run-summary">填写账号后，点击“开始测试”；其余参数可以先保持默认。</p>
+              </div>
+
               <div class="field-grid two-col">
                 <label class="field">
                   <span>测试用户名</span>
@@ -138,56 +154,64 @@
                 <small id="target-help">可以直接填写目标地址；提交时由 Python 校验是否属于允许的测试范围。</small>
               </label>
 
-              <label id="official-scope" class="field official-scope" hidden>
-                <span>官方测试课程筛选（可选）</span>
-                <input id="official-course-filter" name="official_course_filter" placeholder="课程 ID 或名称，多个用英文逗号分隔">
-                <small>登录完成后由 Python 在官方页面读取课程；留空表示使用页面发现的全部候选课程。</small>
-              </label>
+              <details id="advanced-settings" class="advanced-settings" hidden>
+                <summary>
+                  <span><strong>高级设置</strong><small>不确定时保持默认即可</small></span>
+                  <b aria-hidden="true">＋</b>
+                </summary>
+                <div class="advanced-settings-body">
+                  <label id="official-scope" class="field official-scope" hidden>
+                    <span>官方测试课程筛选（可选）</span>
+                    <input id="official-course-filter" name="official_course_filter" placeholder="课程 ID 或名称，多个用英文逗号分隔">
+                    <small>留空即可；登录后程序会读取页面发现的候选课程。</small>
+                  </label>
 
-              <div id="official-player" class="official-player" hidden>
-                <div class="field-grid three-col">
-                  <label class="field">
-                    <span>查找任务点数</span>
-                    <div class="unit-input">
-                      <input id="official-task-points" name="official_task_points" type="number" min="0" max="20" step="1" value="2">
-                      <span>PTS</span>
+                  <div id="official-player" class="official-player" hidden>
+                    <div class="field-grid three-col">
+                      <label class="field">
+                        <span>任务点筛选</span>
+                        <div class="unit-input">
+                          <input id="official-task-points" name="official_task_points" type="number" min="0" max="20" step="1" value="2">
+                          <span>PTS</span>
+                        </div>
+                        <small class="field-help">一般保持 0；0 表示所有未完成项。</small>
+                      </label>
+                      <label class="field">
+                        <span>等待播放器</span>
+                        <div class="unit-input">
+                          <input id="official-player-wait" name="official_player_wait_seconds" type="number" min="1" max="30" step="0.5" value="5">
+                          <span>SEC</span>
+                        </div>
+                        <small class="field-help">网络较慢时再增加。</small>
+                      </label>
+                      <label class="field">
+                        <span>播放倍速</span>
+                        <div class="unit-input">
+                          <input id="official-playback-rate" name="official_playback_rate" type="number" min="1" max="2" step="0.5" value="2">
+                          <span>X</span>
+                        </div>
+                        <small class="field-help">通常保持默认即可。</small>
+                      </label>
                     </div>
-                    <small class="field-help">匹配目录 .orangeNew 剩余任务点，0 表示任意未完成。</small>
-                  </label>
-                  <label class="field">
-                    <span>等待播放器加载</span>
-                    <div class="unit-input">
-                      <input id="official-player-wait" name="official_player_wait_seconds" type="number" min="1" max="30" step="0.5" value="5">
-                      <span>SEC</span>
+                    <div class="field-grid two-col official-player-row">
+                      <label class="field">
+                        <span>测试章节范围</span>
+                        <select id="official-playback-scope" name="official_playback_scope">
+                          <option value="latest_unfinished">只测试下一节未完成</option>
+                          <option value="all_unfinished">本次测试全部未完成</option>
+                        </select>
+                      </label>
+                      <label class="field">
+                        <span>最多测试章节</span>
+                        <div class="unit-input">
+                          <input id="official-max-lessons" name="official_max_lessons" type="number" min="1" max="20" step="1" value="1">
+                          <span>MAX</span>
+                        </div>
+                      </label>
                     </div>
-                    <small class="field-help">切换章节后等待嵌套播放器出现。</small>
-                  </label>
-                  <label class="field">
-                    <span>播放倍速</span>
-                    <div class="unit-input">
-                      <input id="official-playback-rate" name="official_playback_rate" type="number" min="1" max="2" step="0.5" value="2">
-                      <span>X</span>
-                    </div>
-                    <small class="field-help">学习通播放器通常仅支持 2 倍速。</small>
-                  </label>
+                  </div>
                 </div>
-                <div class="field-grid two-col official-player-row">
-                  <label class="field">
-                    <span>播放范围</span>
-                    <select id="official-playback-scope" name="official_playback_scope">
-                      <option value="latest_unfinished">单次 / 下一节未完成</option>
-                      <option value="all_unfinished">循环 / 全部未完成</option>
-                    </select>
-                  </label>
-                  <label class="field">
-                    <span>最多章节</span>
-                    <div class="unit-input">
-                      <input id="official-max-lessons" name="official_max_lessons" type="number" min="1" max="20" step="1" value="1">
-                      <span>MAX</span>
-                    </div>
-                  </label>
-                </div>
-              </div>
+              </details>
 
               <div class="field-grid three-col">
                 <label class="field">
@@ -207,11 +231,11 @@
                   <small id="seconds-help" class="field-help">本地模拟页面等待时间。</small>
                 </label>
                 <label class="toggle-field">
-                  <span>运行模式</span>
+                    <span>运行方式</span>
                   <span class="toggle-row">
                     <input id="headless" name="headless" type="checkbox">
                     <span class="toggle" aria-hidden="true"></span>
-                    <span>无头运行</span>
+                    <span id="headless-label">无头运行</span>
                   </span>
                 </label>
               </div>
@@ -230,7 +254,7 @@
               <div class="form-actions">
                 <button id="run-button" class="primary-button" type="submit">
                   <span class="button-icon">▶</span>
-                  <span>启动测试任务</span>
+                  <span>开始测试</span>
                   <span class="button-arrow">↗</span>
                 </button>
                 <p id="form-message" class="form-message" role="status"></p>

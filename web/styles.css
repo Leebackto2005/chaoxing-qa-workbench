@@ -147,6 +147,20 @@ h1 em { color: var(--orange); font-style: normal; }
 h2 { margin-bottom: 0; font-size: 22px; letter-spacing: -0.03em; }
 .panel-mark, .shield-icon { color: var(--mint); font-size: 25px; line-height: 1; }
 
+.quick-start { margin-bottom: 24px; padding: 17px; border: 1px solid rgba(108, 228, 194, 0.2); border-radius: 15px; background: linear-gradient(135deg, rgba(108, 228, 194, 0.08), rgba(108, 228, 194, 0.02)); }
+.quick-start-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.quick-start-heading strong { display: block; margin-top: 6px; font-size: 17px; letter-spacing: -0.02em; }
+.quick-start-tag { padding: 6px 8px; color: var(--mint); border: 1px solid rgba(108, 228, 194, 0.24); border-radius: 6px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 9px; letter-spacing: 0.06em; white-space: nowrap; }
+.quick-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 17px; }
+.quick-step { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: rgba(7, 13, 25, 0.22); }
+.quick-step b { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 auto; color: var(--dim); border: 1px solid var(--line-strong); border-radius: 7px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 10px; }
+.quick-step.active { border-color: rgba(108, 228, 194, 0.34); background: rgba(108, 228, 194, 0.06); }
+.quick-step.active b { color: var(--mint); border-color: rgba(108, 228, 194, 0.5); }
+.quick-step strong, .quick-step small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quick-step strong { color: var(--text); font-size: 11px; }
+.quick-step small { margin-top: 3px; color: var(--dim); font-size: 9px; }
+.run-summary { margin: 14px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+
 .field-grid { display: grid; gap: 16px; }
 .two-col { grid-template-columns: 1fr 1fr; }
 .three-col { grid-template-columns: 1fr 1fr 1.05fr; margin-top: 21px; }
@@ -167,6 +181,16 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .official-scope input { border-color: rgba(255, 189, 122, 0.28); }
 .official-player { margin-top: 18px; padding: 16px; border: 1px solid rgba(255, 189, 122, 0.18); border-radius: 14px; background: rgba(255, 189, 122, 0.04); }
 .official-player-row { margin-top: 14px; }
+.advanced-settings { margin-top: 21px; border: 1px solid rgba(255, 189, 122, 0.18); border-radius: 14px; background: rgba(255, 189, 122, 0.035); }
+.advanced-settings summary { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; color: var(--muted); cursor: pointer; list-style: none; }
+.advanced-settings summary::-webkit-details-marker { display: none; }
+.advanced-settings summary > span { display: grid; gap: 4px; }
+.advanced-settings summary strong { color: var(--text); font-size: 12px; }
+.advanced-settings summary small { color: var(--dim); font-size: 10px; }
+.advanced-settings summary > b { color: var(--orange); font-size: 18px; font-weight: 400; transition: transform .18s; }
+.advanced-settings[open] summary > b { transform: rotate(45deg); }
+.advanced-settings-body { padding: 0 16px 16px; border-top: 1px solid rgba(255, 189, 122, 0.12); }
+.advanced-settings-body > .official-scope:first-child { margin-top: 16px; }
 .input-with-badge, .unit-input { position: relative; }
 .input-with-badge input { padding-right: 100px; }
 .lock-badge, .unit-input span { position: absolute; top: 50%; right: 11px; transform: translateY(-50%); color: var(--mint); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; }
@@ -264,6 +288,8 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .step-line { width: 1px; height: 13px; margin-left: 14px; }
   .config-panel, .monitor-panel { padding: 22px 18px; }
   .log-panel, .guard-panel { padding: 22px 18px; }
+  .quick-start-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .quick-steps { grid-template-columns: 1fr; gap: 8px; }
   .two-col, .three-col, .course-list { grid-template-columns: 1fr; }
   .three-col { gap: 17px; }
   .course-heading { align-items: start; flex-direction: column; }

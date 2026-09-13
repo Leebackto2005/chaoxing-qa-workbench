@@ -9,6 +9,7 @@ const ui = {
   baseUrl: $("base-url"),
   targetBadge: $("target-badge"),
   targetHelp: $("target-help"),
+  advancedSettings: $("advanced-settings"),
   officialScope: $("official-scope"),
   officialCourseFilter: $("official-course-filter"),
   officialPlayer: $("official-player"),
@@ -19,9 +20,11 @@ const ui = {
   officialMaxLessons: $("official-max-lessons"),
   browser: $("browser"),
   headless: $("headless"),
+  headlessLabel: $("headless-label"),
   lessonSeconds: $("lesson-seconds"),
   secondsLabel: $("seconds-label"),
   secondsHelp: $("seconds-help"),
+  runSummary: $("run-summary"),
   courseList: $("course-list"),
   selectedCount: $("selected-count"),
   runButton: $("run-button"),
@@ -80,6 +83,23 @@ async function api(path, options = {}) {
 function setMessage(text, type = "") {
   ui.formMessage.textContent = text;
   ui.formMessage.className = `form-message ${type}`.trim();
+}
+
+function updateRunSummary() {
+  const official = ui.targetMode.value === "official";
+  const browser = ui.browser.options[ui.browser.selectedIndex]?.text || "浏览器";
+  const duration = ui.lessonSeconds.value || "默认";
+  ui.runSummary.textContent = official
+    ? `点击“开始测试”后，${browser} 会打开目标网站；你完成验证码并点击登录，程序再检查一节课程（${duration} 秒）。`
+    : `点击“开始测试”后，程序会在本机模拟环境完成检查；每节测试 ${duration} 秒。`;
+}
+
+function validateQuickStart(official) {
+  if (!ui.username.value.trim()) return "请先填写测试用户名。";
+  if (official && !ui.password.value) return "请先填写官方测试密码。";
+  if (!ui.baseUrl.value.trim()) return "请先填写测试目标网站。";
+  if (!ui.baseUrl.checkValidity()) return "测试目标网站格式不正确，请填写完整地址。";
+  return "";
 }
 
 function selectedCourseIds() {
@@ -146,9 +166,12 @@ function applyTargetMode() {
   }
   ui.baseUrl.dataset.mode = mode;
   ui.targetBadge.textContent = official ? "ALLOWLIST" : "LOOPBACK";
+  ui.advancedSettings.hidden = !official;
   ui.officialScope.hidden = !official;
   ui.officialPlayer.hidden = !official;
   ui.headless.disabled = official;
+  ui.headlessLabel.textContent = official ? "可见窗口（验证码）" : "无头运行";
+  ui.password.placeholder = official ? "请输入官方测试密码" : "可留空，使用 .env 中的密码";
   if (official) {
     ui.headless.checked = false;
     ui.modeHelp.textContent = "官方授权测试：Python 填写账号后暂停，验证码和登录按钮由人工完成。";
@@ -178,6 +201,7 @@ function applyTargetMode() {
     ui.guardCopy.textContent = "这是本机测试控制台。密码只在本次请求和 Python 任务内存中使用，不写入浏览器本地存储。";
     renderCourses(currentCourses, currentConfig.course_ids || [], "local");
   }
+  updateRunSummary();
 }
 
 function renderReport(report) {
@@ -308,12 +332,20 @@ function renderSegmentPreview() {
 }
 
 ui.targetMode.addEventListener("change", applyTargetMode);
+ui.baseUrl.addEventListener("input", updateRunSummary);
+ui.browser.addEventListener("change", updateRunSummary);
+ui.lessonSeconds.addEventListener("input", updateRunSummary);
 ui.form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (ui.runButton.disabled) return;
-  setMessage("正在提交给 Python…");
-  ui.runButton.disabled = true;
   const official = ui.targetMode.value === "official";
+  const validationMessage = validateQuickStart(official);
+  if (validationMessage) {
+    setMessage(validationMessage, "error");
+    return;
+  }
+  setMessage("正在准备浏览器…");
+  ui.runButton.disabled = true;
   const duration = Number(ui.lessonSeconds.value);
   const payload = {
     username: ui.username.value.trim(),
