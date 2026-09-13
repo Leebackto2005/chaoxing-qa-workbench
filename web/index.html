@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b1020">
+    <title>学习测试控制台</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="学习测试控制台首页">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>
+            <strong>学习测试控制台</strong>
+            <small>COURSE FLOW LAB</small>
+          </span>
+        </a>
+        <div class="topbar-meta">
+          <span id="env-badge" class="env-badge"><span class="status-dot"></span>LOCAL TEST</span>
+          <span class="host-label">127.0.0.1</span>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div>
+            <p class="eyebrow">AUTOMATION TEST WORKBENCH <span>·</span> 01</p>
+            <h1>把测试配置交给 Python，<em>把结果留在现场。</em></h1>
+            <p class="hero-copy">配置一次测试账号与课程范围，启动浏览器流程，实时观察登录、课程遍历、章节播放和进度写入。</p>
+          </div>
+          <div class="hero-note">
+            <span class="note-kicker">运行边界</span>
+            <strong id="hero-guard-title">回环地址保护已启用</strong>
+            <p id="hero-guard-copy">当前控制台只连接本地模拟平台，不会把账号或课程数据发送到外部地址。</p>
+          </div>
+        </section>
+
+        <section class="panel studio-panel" aria-labelledby="studio-title">
+          <div class="panel-heading studio-heading">
+            <div>
+              <p class="section-index">05 / CONTENT STUDIO</p>
+              <h2 id="studio-title">内容编排</h2>
+            </div>
+            <span class="preview-badge"><span class="status-dot"></span>PREVIEW ONLY</span>
+          </div>
+
+          <div class="studio-steps" aria-label="内容编排步骤">
+            <div class="studio-step active"><span>01</span><strong>输入片段</strong><small>写下要呈现的内容</small></div>
+            <div class="step-line"></div>
+            <div class="studio-step"><span>02</span><strong>查看课程</strong><small>检查内容是否齐全</small></div>
+            <div class="step-line"></div>
+            <div class="studio-step"><span>03</span><strong>选择主题</strong><small>确定呈现风格</small></div>
+          </div>
+
+          <div class="studio-grid">
+            <div class="studio-input-column">
+              <label class="field studio-textarea-field">
+                <span>内容片段 / 段落</span>
+                <textarea id="segment-input" maxlength="500" placeholder="例如：异常处理让程序在遇到意外输入时保持可控，并给出清晰的错误信息。"></textarea>
+                <small><span id="segment-count">0</span> / 500 字 · 内容只用于当前页面预览</small>
+              </label>
+              <button id="render-segment" class="secondary-button" type="button"><span>✦</span><span>生成动态预览</span><span>↗</span></button>
+            </div>
+
+            <div class="animated-preview" id="animated-preview" aria-live="polite">
+              <div class="preview-topline"><span id="preview-theme-label">MINT / SIGNAL</span><span id="preview-state">READY</span></div>
+              <div class="preview-canvas theme-mint" id="preview-canvas">
+                <span class="preview-kicker">COURSE CONTENT / LIVE PREVIEW</span>
+                <p id="preview-text">输入一段内容，点击生成动态预览。</p>
+                <span class="preview-cursor" aria-hidden="true"></span>
+              </div>
+            </div>
+
+            <div class="content-audit">
+              <div class="audit-header">
+                <div><span class="field-label">课程内容检查</span><p>选择课程，查看本地测试内容覆盖情况。</p></div>
+                <span id="audit-status" class="audit-status partial">PARTIAL</span>
+              </div>
+              <label class="field audit-select-field">
+                <span>当前课程</span>
+                <select id="content-course" aria-label="选择要检查的课程"></select>
+              </label>
+              <div class="audit-progress"><span id="audit-progress-bar"></span></div>
+              <div class="audit-meta"><span id="audit-progress-text">已覆盖 2 / 3 项</span><span id="audit-percent">67%</span></div>
+              <div class="audit-columns"><div><small>已覆盖</small><ul id="covered-list"></ul></div><div><small>待补齐</small><ul id="missing-list"></ul></div></div>
+            </div>
+
+            <div class="theme-picker">
+              <div class="audit-header"><div><span class="field-label">呈现主题</span><p>主题只影响预览画布，不改变课程数据。</p></div><span id="theme-name" class="theme-name">MINT</span></div>
+              <div class="theme-options" role="radiogroup" aria-label="选择呈现主题">
+                <button class="theme-option selected" data-theme="mint" type="button" role="radio" aria-checked="true"><span class="theme-swatch mint-swatch"></span><span><strong>Mint Signal</strong><small>清晰 / 可靠</small></span></button>
+                <button class="theme-option" data-theme="amber" type="button" role="radio" aria-checked="false"><span class="theme-swatch amber-swatch"></span><span><strong>Amber Focus</strong><small>温暖 / 强调</small></span></button>
+                <button class="theme-option" data-theme="blue" type="button" role="radio" aria-checked="false"><span class="theme-swatch blue-swatch"></span><span><strong>Blue Graph</strong><small>理性 / 结构</small></span></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="workspace-grid">
+          <section class="panel config-panel" aria-labelledby="config-title">
+            <div class="panel-heading">
+              <div>
+                <p class="section-index">01 / CONFIGURE</p>
+                <h2 id="config-title">测试配置</h2>
+              </div>
+              <span class="panel-mark" aria-hidden="true">↘</span>
+            </div>
+
+            <form id="run-form" novalidate>
+              <div class="field-grid two-col">
+                <label class="field">
+                  <span>测试用户名</span>
+                  <input id="username" name="username" autocomplete="username" placeholder="test_user" required>
+                </label>
+                <label class="field">
+                  <span>测试密码</span>
+                  <input id="password" name="password" type="password" autocomplete="current-password" placeholder="使用 .env 中的密码或临时输入">
+                </label>
+              </div>
+
+              <label class="field target-mode-field">
+                <span>测试环境</span>
+                <select id="target-mode" name="target_mode">
+                  <option value="local">Local Mock · 本地模拟</option>
+                  <option value="official">Official Test · 官方授权测试</option>
+                </select>
+                <small id="mode-help">本地模拟平台用于回归接口、播放前置条件和限流规则。</small>
+              </label>
+
+              <label class="field target-field">
+                <span>测试目标网站</span>
+                <div class="input-with-badge">
+                  <input id="base-url" name="base_url" type="url" inputmode="url" autocomplete="url" spellcheck="false" required aria-describedby="target-help" placeholder="https://example.test">
+                  <span id="target-badge" class="lock-badge" title="输入框可编辑，提交时由 Python 校验">LOOPBACK</span>
+                </div>
+                <small id="target-help">可以直接填写目标地址；提交时由 Python 校验是否属于允许的测试范围。</small>
+              </label>
+
+              <label id="official-scope" class="field official-scope" hidden>
+                <span>官方测试课程筛选（可选）</span>
+                <input id="official-course-filter" name="official_course_filter" placeholder="课程 ID 或名称，多个用英文逗号分隔">
+                <small>登录完成后由 Python 在官方页面读取课程；留空表示使用页面发现的全部候选课程。</small>
+              </label>
+
+              <div id="official-player" class="official-player" hidden>
+                <div class="field-grid three-col">
+                  <label class="field">
+                    <span>查找任务点数</span>
+                    <div class="unit-input">
+                      <input id="official-task-points" name="official_task_points" type="number" min="0" max="20" step="1" value="2">
+                      <span>PTS</span>
+                    </div>
+                    <small class="field-help">匹配目录 .orangeNew 剩余任务点，0 表示任意未完成。</small>
+                  </label>
+                  <label class="field">
+                    <span>等待播放器加载</span>
+                    <div class="unit-input">
+                      <input id="official-player-wait" name="official_player_wait_seconds" type="number" min="1" max="30" step="0.5" value="5">
+                      <span>SEC</span>
+                    </div>
+                    <small class="field-help">切换章节后等待嵌套播放器出现。</small>
+                  </label>
+                  <label class="field">
+                    <span>播放倍速</span>
+                    <div class="unit-input">
+                      <input id="official-playback-rate" name="official_playback_rate" type="number" min="1" max="2" step="0.5" value="2">
+                      <span>X</span>
+                    </div>
+                    <small class="field-help">学习通播放器通常仅支持 2 倍速。</small>
+                  </label>
+                </div>
+                <div class="field-grid two-col official-player-row">
+                  <label class="field">
+                    <span>播放范围</span>
+                    <select id="official-playback-scope" name="official_playback_scope">
+                      <option value="latest_unfinished">单次 / 下一节未完成</option>
+                      <option value="all_unfinished">循环 / 全部未完成</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>最多章节</span>
+                    <div class="unit-input">
+                      <input id="official-max-lessons" name="official_max_lessons" type="number" min="1" max="20" step="1" value="1">
+                      <span>MAX</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="field-grid three-col">
+                <label class="field">
+                  <span>浏览器</span>
+                  <select id="browser" name="browser">
+                    <option value="chrome">Chrome</option>
+                    <option value="edge">Edge</option>
+                    <option value="firefox">Firefox</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span id="seconds-label">每节测试时长</span>
+                  <div class="unit-input">
+                    <input id="lesson-seconds" name="lesson_seconds" type="number" min="0.1" max="3600" step="0.1" value="1.0">
+                    <span>SEC</span>
+                  </div>
+                  <small id="seconds-help" class="field-help">本地模拟页面等待时间。</small>
+                </label>
+                <label class="toggle-field">
+                  <span>运行模式</span>
+                  <span class="toggle-row">
+                    <input id="headless" name="headless" type="checkbox">
+                    <span class="toggle" aria-hidden="true"></span>
+                    <span>无头运行</span>
+                  </span>
+                </label>
+              </div>
+
+              <div class="course-heading">
+                <div>
+                  <span class="field-label">测试课程</span>
+                  <p>只执行勾选的课程，留空时默认执行全部课程。</p>
+                </div>
+                <span id="selected-count" class="count-badge">0 门已选</span>
+              </div>
+              <div id="course-list" class="course-list" aria-live="polite">
+                <div class="loading-card"><span class="spinner"></span>正在读取课程清单</div>
+              </div>
+
+              <div class="form-actions">
+                <button id="run-button" class="primary-button" type="submit">
+                  <span class="button-icon">▶</span>
+                  <span>启动测试任务</span>
+                  <span class="button-arrow">↗</span>
+                </button>
+                <p id="form-message" class="form-message" role="status"></p>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel monitor-panel" aria-labelledby="monitor-title">
+            <div class="panel-heading monitor-heading">
+              <div>
+                <p class="section-index">02 / MONITOR</p>
+                <h2 id="monitor-title">执行现场</h2>
+              </div>
+              <span id="state-badge" class="state-badge idle"><span class="status-dot"></span><span id="state-label">待机</span></span>
+            </div>
+
+            <div class="progress-summary">
+              <div class="progress-topline">
+                <span>当前课程进度</span>
+                <strong id="percent">0%</strong>
+              </div>
+              <div class="progress-track" aria-label="课程进度">
+                <span id="progress-bar"></span>
+              </div>
+              <div class="progress-meta">
+                <span id="progress-count">0 / 0 节</span>
+                <span id="course-position">等待任务</span>
+              </div>
+            </div>
+
+            <div class="current-card">
+              <div class="current-label"><span class="pulse-ring"></span>当前焦点</div>
+              <strong id="current-course">尚未开始</strong>
+              <span id="current-lesson">等待 Python 执行器接管</span>
+            </div>
+
+            <div class="check-list">
+              <div class="check-item"><span class="check-icon">✓</span><span id="target-check">本地目标校验</span><b>ENABLED</b></div>
+              <div class="check-item"><span class="check-icon">✓</span><span id="play-check">播放前置条件</span><b>ENABLED</b></div>
+              <div class="check-item"><span class="check-icon">✓</span><span id="screenshot-check">异常截图</span><b>ENABLED</b></div>
+            </div>
+
+            <div id="report-card" class="result-card" hidden>
+              <div class="result-topline"><span>PLAYBACK RESULT</span><span id="result-badge">WAITING</span></div>
+              <strong id="report-summary">等待播放测试报告</strong>
+              <p id="report-detail">报告会在 Python 完成官方课程和章节检查后显示。</p>
+            </div>
+          </section>
+        </div>
+
+        <div class="lower-grid">
+          <section class="panel log-panel" aria-labelledby="log-title">
+            <div class="panel-heading compact-heading">
+              <div>
+                <p class="section-index">03 / STREAM</p>
+                <h2 id="log-title">事件流</h2>
+              </div>
+              <span class="live-label"><span class="live-dot"></span>LIVE</span>
+            </div>
+            <pre id="log-output" class="log-output" aria-live="polite">等待任务事件…</pre>
+          </section>
+
+          <section class="panel guard-panel" aria-labelledby="guard-title">
+            <div class="panel-heading compact-heading">
+              <div>
+                <p class="section-index">04 / GUARDRAILS</p>
+                <h2 id="guard-title">测试护栏</h2>
+              </div>
+              <span class="shield-icon" aria-hidden="true">⌁</span>
+            </div>
+            <div class="guard-copy">
+              <p id="guard-copy">这是本机测试控制台。密码只在本次请求和 Python 任务内存中使用，不写入浏览器本地存储。</p>
+              <div class="guard-tags"><span>NO STEALTH</span><span>MANUAL CAPTCHA</span><span>NO COMPLETION WRITE</span></div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <span>COURSE FLOW LAB / SOFTWARE ENGINEERING TEST</span>
+        <span>Python executor is ready</span>
+      </footer>
+    </div>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

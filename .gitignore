@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+logs/*.log
+screenshots/*
+progress.json
+playback_report.json
+*.zip
+*.tmp
