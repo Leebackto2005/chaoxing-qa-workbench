@@ -78,6 +78,43 @@ python main.py ui
 
 然后打开 `http://127.0.0.1:8787`。页面中的密码只随本次启动请求交给 Python 内存任务，不写入浏览器 `localStorage`；如果密码留空，则使用本机 `.env` 中已经配置的密码。
 
+### Docker 一键运行
+
+Docker 镜像已经包含 Python 3.12、Selenium、Chromium、ChromiumDriver 和中文字体，不需要在宿主机单独安装 Python 或浏览器。需要 Docker Desktop 和 Docker Compose v2：
+
+```bash
+cp .env.docker.example .env
+docker compose up --build -d
+```
+
+Windows PowerShell 可使用：
+
+```powershell
+Copy-Item .env.docker.example .env
+docker compose up --build -d
+```
+
+打开 `http://127.0.0.1:8787`，查看容器状态和日志：
+
+```bash
+docker compose ps
+docker compose logs -f workbench
+```
+
+首次启动后可运行一次容器内自检：
+
+```bash
+docker compose run --rm --no-deps workbench python main.py self-test
+```
+
+运行数据会保存在项目的 `runtime/` 目录中，包括日志、截图、`progress.json` 和 `playback_report.json`。账号密码只通过 `.env` 或运行时环境传入，不会写进镜像；`.env` 已被 Git 忽略。Docker 默认使用本地模拟平台、Chromium 和无头模式。官方授权测试需要人工完成验证码，默认容器没有可见桌面，建议在宿主机使用 Edge/Chrome 的可见模式运行；如确实需要容器内可见浏览器，需要另外接入受控的显示或 VNC 环境。
+
+停止容器但保留 `runtime/` 数据：
+
+```bash
+docker compose down
+```
+
 ### 官方授权测试模式
 
 官方模式必须使用专用测试账号、专用测试课程和得到授权的测试窗口。先在本机 `.env` 中配置：
@@ -132,6 +169,10 @@ Python 探测课程和章节
 
 ```text
 shuake/
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
+├── .env.docker.example
 ├── main.py                 # CLI、一次性任务和自检
 ├── config.py               # .env 配置与目标校验
 ├── logger_config.py         # 日志配置

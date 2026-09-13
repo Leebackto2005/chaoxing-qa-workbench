@@ -6,5 +6,6 @@ logs/*.log
 screenshots/*
 progress.json
 playback_report.json
+runtime/
 *.zip
 *.tmp

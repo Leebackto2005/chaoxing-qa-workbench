@@ -1,0 +1,48 @@
+name: chaoxing-qa-workbench
+
+services:
+  workbench:
+    build:
+      context: .
+    ports:
+      - "127.0.0.1:${UI_PORT:-8787}:8787"
+    environment:
+      CHAOXUN_USERNAME: ${CHAOXUN_USERNAME:-test_user}
+      CHAOXUN_PASSWORD: ${CHAOXUN_PASSWORD:-test_password}
+      CHAOXUN_URL: ${CHAOXUN_URL:-http://127.0.0.1:8765}
+      TEST_TARGET: ${TEST_TARGET:-local}
+      ALLOW_OFFICIAL_TEST: ${ALLOW_OFFICIAL_TEST:-false}
+      CONTROL_HOST: 0.0.0.0
+      OFFICIAL_URL: ${OFFICIAL_URL:-https://v8.chaoxing.com}
+      MOCK_SERVER: ${MOCK_SERVER:-true}
+      BROWSER: ${BROWSER:-chrome}
+      HEADLESS: ${HEADLESS:-true}
+      BROWSER_TIMEOUT: ${BROWSER_TIMEOUT:-30}
+      LESSON_SECONDS: ${LESSON_SECONDS:-1.0}
+      PLAYBACK_MINUTES: ${PLAYBACK_MINUTES:-10.0}
+      OFFICIAL_PLAYBACK_SCOPE: ${OFFICIAL_PLAYBACK_SCOPE:-latest_unfinished}
+      OFFICIAL_MAX_LESSONS: ${OFFICIAL_MAX_LESSONS:-1}
+      OFFICIAL_TASK_POINTS: ${OFFICIAL_TASK_POINTS:-2}
+      OFFICIAL_PLAYER_WAIT_SECONDS: ${OFFICIAL_PLAYER_WAIT_SECONDS:-5}
+      OFFICIAL_PLAYBACK_RATE: ${OFFICIAL_PLAYBACK_RATE:-2}
+      OFFICIAL_USERNAME_SELECTOR: ${OFFICIAL_USERNAME_SELECTOR:-}
+      OFFICIAL_PASSWORD_SELECTOR: ${OFFICIAL_PASSWORD_SELECTOR:-}
+      OFFICIAL_LOGGED_IN_SELECTOR: ${OFFICIAL_LOGGED_IN_SELECTOR:-}
+      OFFICIAL_COURSE_SELECTOR: ${OFFICIAL_COURSE_SELECTOR:-}
+      OFFICIAL_LESSON_SELECTOR: ${OFFICIAL_LESSON_SELECTOR:-}
+      OFFICIAL_PLAY_SELECTOR: ${OFFICIAL_PLAY_SELECTOR:-}
+      COURSE_IDS: ${COURSE_IDS:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      MOCK_HOST: 127.0.0.1
+      MOCK_PORT: 8765
+      BROWSER_BINARY: /usr/bin/chromium
+      BROWSER_DRIVER: /usr/bin/chromedriver
+      BROWSER_NO_SANDBOX: "true"
+      LOG_FILE: /app/runtime/logs/chaoxun.log
+      SCREENSHOT_DIR: /app/runtime/screenshots
+      PROGRESS_FILE: /app/runtime/progress.json
+      REPORT_FILE: /app/runtime/playback_report.json
+    volumes:
+      - ./runtime:/app/runtime
+    init: true
+    restart: unless-stopped

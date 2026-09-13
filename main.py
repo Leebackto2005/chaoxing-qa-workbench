@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import time
 import urllib.error
 import urllib.parse
@@ -156,7 +157,8 @@ def main() -> int:
         elif args.command == "schedule":
             DailyScheduler(logger).run(lambda: run_once(settings, logger), args.time)
         elif args.command == "ui":
-            control_server = start_control_server(settings, logger, run_once, port=args.port)
+            control_host = os.getenv("CONTROL_HOST", "127.0.0.1").strip() or "127.0.0.1"
+            control_server = start_control_server(settings, logger, run_once, host=control_host, port=args.port)
             logger.info("Web 控制台地址: %s", control_server.base_url)
             while True:
                 time.sleep(1)

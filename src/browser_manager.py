@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from datetime import datetime
 from typing import Optional
@@ -27,13 +28,25 @@ class BrowserManager:
 
         if self.settings.browser == "chrome":
             options = webdriver.ChromeOptions()
+            browser_binary = os.getenv("BROWSER_BINARY", "").strip()
+            browser_driver = os.getenv("BROWSER_DRIVER", "").strip()
+            if browser_binary:
+                options.binary_location = browser_binary
+                options.add_argument("--disable-dev-shm-usage")
+            if os.getenv("BROWSER_NO_SANDBOX", "").strip().lower() in {"1", "true", "yes", "on"}:
+                options.add_argument("--no-sandbox")
             if self.settings.headless:
                 options.add_argument("--headless=new")
             options.add_argument("--window-size=1440,1000")
             # Read-only network observations are used by the official test
             # report. Query strings are removed before anything is persisted.
             options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
-            self.driver = webdriver.Chrome(options=options)
+            if browser_driver:
+                from selenium.webdriver.chrome.service import Service
+
+                self.driver = webdriver.Chrome(service=Service(browser_driver), options=options)
+            else:
+                self.driver = webdriver.Chrome(options=options)
         elif self.settings.browser == "edge":
             options = webdriver.EdgeOptions()
             if self.settings.headless:
