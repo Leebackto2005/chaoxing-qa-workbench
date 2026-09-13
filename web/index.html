@@ -223,12 +223,12 @@
                   </select>
                 </label>
                 <label class="field">
-                  <span id="seconds-label">每节测试时长</span>
+                  <span id="duration-label">每节测试时长</span>
                   <div class="unit-input">
-                    <input id="lesson-seconds" name="lesson_seconds" type="number" min="0.1" max="3600" step="0.1" value="1.0">
-                    <span>SEC</span>
+                    <input id="duration-input" name="duration" type="number" min="0.1" max="3600" step="0.1" value="1.0">
+                    <span id="duration-unit">SEC</span>
                   </div>
-                  <small id="seconds-help" class="field-help">本地模拟页面等待时间。</small>
+                  <small id="duration-help" class="field-help">本地模拟页面等待时间，单位为秒。</small>
                 </label>
                 <label class="toggle-field">
                     <span>运行方式</span>

@@ -21,9 +21,10 @@ const ui = {
   browser: $("browser"),
   headless: $("headless"),
   headlessLabel: $("headless-label"),
-  lessonSeconds: $("lesson-seconds"),
-  secondsLabel: $("seconds-label"),
-  secondsHelp: $("seconds-help"),
+  durationInput: $("duration-input"),
+  durationLabel: $("duration-label"),
+  durationUnit: $("duration-unit"),
+  durationHelp: $("duration-help"),
   runSummary: $("run-summary"),
   courseList: $("course-list"),
   selectedCount: $("selected-count"),
@@ -88,10 +89,11 @@ function setMessage(text, type = "") {
 function updateRunSummary() {
   const official = ui.targetMode.value === "official";
   const browser = ui.browser.options[ui.browser.selectedIndex]?.text || "浏览器";
-  const duration = ui.lessonSeconds.value || "默认";
+  const duration = ui.durationInput.value || "默认";
+  const unit = official ? "分钟" : "秒";
   ui.runSummary.textContent = official
-    ? `点击“开始测试”后，${browser} 会打开目标网站；你完成验证码并点击登录，程序再检查一节课程（${duration} 秒）。`
-    : `点击“开始测试”后，程序会在本机模拟环境完成检查；每节测试 ${duration} 秒。`;
+    ? `点击“开始测试”后，${browser} 会打开目标网站；你完成验证码并点击登录，程序再检查一节课程（${duration} ${unit}）。`
+    : `点击“开始测试”后，程序会在本机模拟环境完成检查；每节测试 ${duration} ${unit}。`;
 }
 
 function validateQuickStart(official) {
@@ -172,12 +174,21 @@ function applyTargetMode() {
   ui.headless.disabled = official;
   ui.headlessLabel.textContent = official ? "可见窗口（验证码）" : "无头运行";
   ui.password.placeholder = official ? "请输入官方测试密码" : "可留空，使用 .env 中的密码";
+  if (!ui.durationInput.value || ui.durationInput.dataset.mode !== mode) {
+    ui.durationInput.value = official
+      ? (currentConfig.playback_minutes || 10)
+      : (currentConfig.lesson_seconds || 1.0);
+  }
+  ui.durationInput.dataset.mode = mode;
+  ui.durationInput.min = "0.1";
+  ui.durationInput.max = official ? "60" : "3600";
+  ui.durationUnit.textContent = official ? "MIN" : "SEC";
   if (official) {
     ui.headless.checked = false;
     ui.modeHelp.textContent = "官方授权测试：Python 填写账号后暂停，验证码和登录按钮由人工完成。";
     ui.targetHelp.textContent = "可填写授权的预发布地址；提交时仅允许 HTTPS 的 chaoxing.com 子域名，不调用完成或刷进度接口。";
-    ui.secondsLabel.textContent = "单章节播放时长";
-    ui.secondsHelp.textContent = "二倍速下建议设为视频平均时长的一半；至少 1 秒。";
+    ui.durationLabel.textContent = "单章节播放时长";
+    ui.durationHelp.textContent = "按分钟填写；二倍速下可按视频平均时长的一半估算，范围 0.1–60 分钟。";
     ui.targetCheck.textContent = "官方 HTTPS 域名白名单";
     ui.playCheck.textContent = "播放控件与媒体观测";
     ui.screenshotCheck.textContent = "异常截图（不截登录超时页）";
@@ -185,13 +196,12 @@ function applyTargetMode() {
     ui.heroGuardTitle.textContent = "官方授权测试护栏已启用";
     ui.heroGuardCopy.textContent = "浏览器保持可见，人工完成验证码；测试只观察播放结果，不写入完成记录。";
     ui.guardCopy.textContent = "密码只在本次请求和 Python 任务内存中使用；官方登录由人工完成验证码和点击，不保存 Cookie 或密码。";
-    if (Number(ui.lessonSeconds.value) < 1) ui.lessonSeconds.value = currentConfig.playback_seconds || 10;
     renderCourses([], [], "official");
   } else {
     ui.modeHelp.textContent = "本地模拟平台用于回归接口、播放前置条件和限流规则。";
     ui.targetHelp.textContent = "可填写本地 Mock 地址；提交时只允许 127.0.0.1、localhost 或 [::1]。";
-    ui.secondsLabel.textContent = "每节测试时长";
-    ui.secondsHelp.textContent = "本地模拟页面等待时间。";
+    ui.durationLabel.textContent = "每节测试时长";
+    ui.durationHelp.textContent = "本地模拟页面等待时间，单位为秒。";
     ui.targetCheck.textContent = "本地目标校验";
     ui.playCheck.textContent = "播放前置条件";
     ui.screenshotCheck.textContent = "异常截图";
@@ -334,7 +344,7 @@ function renderSegmentPreview() {
 ui.targetMode.addEventListener("change", applyTargetMode);
 ui.baseUrl.addEventListener("input", updateRunSummary);
 ui.browser.addEventListener("change", updateRunSummary);
-ui.lessonSeconds.addEventListener("input", updateRunSummary);
+ui.durationInput.addEventListener("input", updateRunSummary);
 ui.form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (ui.runButton.disabled) return;
@@ -346,7 +356,7 @@ ui.form.addEventListener("submit", async (event) => {
   }
   setMessage("正在准备浏览器…");
   ui.runButton.disabled = true;
-  const duration = Number(ui.lessonSeconds.value);
+  const duration = Number(ui.durationInput.value);
   const payload = {
     username: ui.username.value.trim(),
     password: ui.password.value,
@@ -354,8 +364,8 @@ ui.form.addEventListener("submit", async (event) => {
     base_url: ui.baseUrl.value,
     browser: ui.browser.value,
     headless: official ? false : ui.headless.checked,
-    lesson_seconds: duration,
-    playback_seconds: duration,
+    lesson_seconds: official ? Number(currentConfig.lesson_seconds || 1.0) : duration,
+    playback_minutes: official ? duration : Number(currentConfig.playback_minutes || 10),
     official_task_points: Number(ui.officialTaskPoints.value),
     official_player_wait_seconds: Number(ui.officialPlayerWait.value),
     official_playback_rate: Number(ui.officialPlaybackRate.value),
@@ -419,7 +429,7 @@ async function bootstrap() {
     if (ui.targetMode.value === "official" && !config.allow_official_test) ui.targetMode.value = "local";
     ui.browser.value = config.browser || "chrome";
     ui.headless.checked = Boolean(config.headless);
-    ui.lessonSeconds.value = config.target_mode === "official" ? (config.playback_seconds || 10) : (config.lesson_seconds || 1.0);
+    ui.durationInput.value = config.target_mode === "official" ? (config.playback_minutes || 10) : (config.lesson_seconds || 1.0);
     ui.officialTaskPoints.value = config.official_task_points || 2;
     ui.officialPlayerWait.value = config.official_player_wait_seconds || 5;
     ui.officialPlaybackRate.value = config.official_playback_rate || 2;

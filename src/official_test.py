@@ -644,7 +644,7 @@ class OfficialTestRunner:
         video_found = bool(videos_before_start)
         if video_found:
             self._start_videos()
-            time.sleep(self.settings.playback_seconds)
+            time.sleep(self.settings.playback_minutes * 60.0)
         after = self._video_states()
         deltas = []
         for index, state in enumerate(after):
@@ -662,7 +662,7 @@ class OfficialTestRunner:
         return {
             "control_found": control_found,
             "video_found": video_found,
-            "playback_seconds_requested": self.settings.playback_seconds,
+            "playback_minutes_requested": self.settings.playback_minutes,
             "playback_rate_requested": self.settings.official_playback_rate,
             "playback_rate_observed": observed_rate,
             "played_seconds_observed": played_seconds,

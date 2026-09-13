@@ -89,7 +89,7 @@ CHAOXUN_URL=https://v8.chaoxing.com
 OFFICIAL_URL=https://v8.chaoxing.com
 MOCK_SERVER=false
 HEADLESS=false
-PLAYBACK_SECONDS=10
+PLAYBACK_MINUTES=10
 OFFICIAL_PLAYBACK_SCOPE=latest_unfinished
 OFFICIAL_MAX_LESSONS=1
 OFFICIAL_TASK_POINTS=2
@@ -174,7 +174,7 @@ shuake/
 | `HEADLESS` | 无头浏览器模式 | `false` |
 | `BROWSER_TIMEOUT` | 浏览器超时时间（秒） | `30` |
 | `LESSON_SECONDS` | 每节本地模拟学习等待时间 | `1.0` |
-| `PLAYBACK_SECONDS` | 官方模式每个章节的播放观测时间 | `10.0` |
+| `PLAYBACK_MINUTES` | 官方模式每个章节的播放观测时间（分钟） | `10.0` |
 | `OFFICIAL_PLAYBACK_SCOPE` | `latest_unfinished` 或 `all_unfinished` | `latest_unfinished` |
 | `OFFICIAL_MAX_LESSONS` | 单次官方测试最多播放观测的章节数，范围 1–20 | `1` |
 | `OFFICIAL_TASK_POINTS` | 学习通目录 `.orangeNew` 任务点数，0 表示任意未完成 | `2` |

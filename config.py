@@ -53,7 +53,7 @@ class Settings:
     headless: bool
     browser_timeout: int
     lesson_seconds: float
-    playback_seconds: float
+    playback_minutes: float
     log_level: str
     log_file: Path
     screenshot_dir: Path
@@ -62,7 +62,6 @@ class Settings:
     mock_host: str
     mock_port: int
     course_ids: Tuple[str, ...]
-
 
 def load_settings(env_file: Union[str, Path] = ".env") -> Settings:
     _load_dotenv(Path(env_file))
@@ -73,6 +72,13 @@ def load_settings(env_file: Union[str, Path] = ".env") -> Settings:
     playback_scope = os.getenv("OFFICIAL_PLAYBACK_SCOPE", "latest_unfinished").strip().lower()
     if playback_scope not in {"latest_unfinished", "all_unfinished"}:
         playback_scope = "latest_unfinished"
+    playback_minutes_raw = os.getenv("PLAYBACK_MINUTES")
+    if playback_minutes_raw is None:
+        # Backward compatibility: an older .env may still contain seconds.
+        playback_minutes = max(0.1, float(os.getenv("PLAYBACK_SECONDS", "600.0")) / 60.0)
+    else:
+        playback_minutes = max(0.1, float(playback_minutes_raw))
+    playback_minutes = min(60.0, playback_minutes)
     return Settings(
         username=os.getenv("CHAOXUN_USERNAME", "test_user"),
         password=os.getenv("CHAOXUN_PASSWORD", "test_password"),
@@ -96,7 +102,7 @@ def load_settings(env_file: Union[str, Path] = ".env") -> Settings:
         headless=_as_bool(os.getenv("HEADLESS", "false")),
         browser_timeout=max(1, int(os.getenv("BROWSER_TIMEOUT", "30"))),
         lesson_seconds=max(0.1, float(os.getenv("LESSON_SECONDS", "1.0"))),
-        playback_seconds=max(1.0, float(os.getenv("PLAYBACK_SECONDS", "10.0"))),
+        playback_minutes=playback_minutes,
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         log_file=Path(os.getenv("LOG_FILE", "logs/chaoxun.log")),
         screenshot_dir=Path(os.getenv("SCREENSHOT_DIR", "screenshots")),

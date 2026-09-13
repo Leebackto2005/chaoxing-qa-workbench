@@ -111,21 +111,24 @@ class RunController:
         else:
             headless = bool(headless)
 
-        try:
-            lesson_seconds = float(payload.get("lesson_seconds", self.settings.lesson_seconds))
-        except (TypeError, ValueError) as exc:
-            raise ValueError("每节时长必须是数字") from exc
-        if not 0.1 <= lesson_seconds <= 3600:
-            raise ValueError("每节时长必须在 0.1 到 3600 秒之间")
+        if target_mode == "local":
+            try:
+                lesson_seconds = float(payload.get("lesson_seconds", self.settings.lesson_seconds))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("本地每节时长必须是数字") from exc
+            if not 0.1 <= lesson_seconds <= 3600:
+                raise ValueError("本地每节时长必须在 0.1 到 3600 秒之间")
+        else:
+            lesson_seconds = self.settings.lesson_seconds
 
         try:
-            playback_seconds = float(payload.get("playback_seconds", self.settings.playback_seconds))
+            playback_minutes = float(payload.get("playback_minutes", self.settings.playback_minutes))
         except (TypeError, ValueError) as exc:
-            raise ValueError("播放测试时长必须是数字") from exc
-        if target_mode == "official" and not 1.0 <= playback_seconds <= 3600:
-            raise ValueError("播放测试时长必须在 1 到 3600 秒之间")
+            raise ValueError("官方播放测试时长必须是数字") from exc
+        if target_mode == "official" and not 0.1 <= playback_minutes <= 60:
+            raise ValueError("官方播放测试时长必须在 0.1 到 60 分钟之间")
         if target_mode == "local":
-            playback_seconds = self.settings.playback_seconds
+            playback_minutes = self.settings.playback_minutes
 
         playback_scope = str(
             payload.get("official_playback_scope") or self.settings.official_playback_scope
@@ -177,7 +180,7 @@ class RunController:
             browser=browser,
             headless=headless,
             lesson_seconds=lesson_seconds,
-            playback_seconds=playback_seconds,
+            playback_minutes=playback_minutes,
             official_playback_scope=playback_scope,
             official_max_lessons=max_lessons,
             official_task_points=task_points,
@@ -301,7 +304,7 @@ class ControlHandler(BaseHTTPRequestHandler):
                 "browser": settings.browser,
                 "headless": settings.headless,
                 "lesson_seconds": settings.lesson_seconds,
-                "playback_seconds": settings.playback_seconds,
+                "playback_minutes": settings.playback_minutes,
                 "official_playback_scope": settings.official_playback_scope,
                 "official_max_lessons": settings.official_max_lessons,
                 "official_task_points": settings.official_task_points,
