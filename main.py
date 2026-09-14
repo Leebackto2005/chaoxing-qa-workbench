@@ -21,7 +21,7 @@ from src.course import CourseManager
 from src.control_server import start_control_server, stop_control_server
 from src.login import LoginPage
 from src.mock_platform import start_mock_server, stop_mock_server
-from src.official_test import OfficialTestRunner
+from src.official_test import OfficialTestRunner, ProtectiveStop
 from src.scheduler import DailyScheduler
 
 
@@ -37,6 +37,8 @@ def run_once(settings, logger: logging.Logger, status_callback=None):
             report = OfficialTestRunner(browser, settings, logger, status_callback).run()
             summary = report.get("summary", {})
             failed = int(summary.get("failed", 0))
+            if report.get("protection", {}).get("stopped"):
+                raise ProtectiveStop(report["protection"]["reason"])
             if failed:
                 raise RuntimeError(f"官方播放测试存在 {failed} 项失败，详见 {settings.report_file}")
             logger.info("官方播放测试报告已生成: %s", settings.report_file)

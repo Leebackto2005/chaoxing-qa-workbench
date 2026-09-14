@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple, Union
@@ -27,6 +28,16 @@ def _as_bool(value: str, default: bool = False) -> bool:
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _bounded_float(value: str, name: str, minimum: float, maximum: float) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} 必须是数字") from exc
+    if not math.isfinite(parsed):
+        raise ValueError(f"{name} 必须是有限数字")
+    return max(minimum, min(maximum, parsed))
 
 
 def docker_mode_enabled() -> bool:
@@ -62,6 +73,9 @@ class Settings:
     browser_timeout: int
     lesson_seconds: float
     playback_minutes: float
+    protection_navigation_interval_seconds: float
+    protection_poll_interval_seconds: float
+    protection_failure_cooldown_seconds: int
     log_level: str
     log_file: Path
     screenshot_dir: Path
@@ -111,6 +125,22 @@ def load_settings(env_file: Union[str, Path] = ".env") -> Settings:
         browser_timeout=max(1, int(os.getenv("BROWSER_TIMEOUT", "30"))),
         lesson_seconds=max(0.1, float(os.getenv("LESSON_SECONDS", "1.0"))),
         playback_minutes=playback_minutes,
+        protection_navigation_interval_seconds=_bounded_float(
+            os.getenv("PROTECTION_NAVIGATION_INTERVAL_SECONDS", "3.0"),
+            "PROTECTION_NAVIGATION_INTERVAL_SECONDS",
+            1.0,
+            60.0,
+        ),
+        protection_poll_interval_seconds=_bounded_float(
+            os.getenv("PROTECTION_POLL_INTERVAL_SECONDS", "1.0"),
+            "PROTECTION_POLL_INTERVAL_SECONDS",
+            0.5,
+            10.0,
+        ),
+        protection_failure_cooldown_seconds=max(
+            0,
+            min(86400, int(os.getenv("PROTECTION_FAILURE_COOLDOWN_SECONDS", "300"))),
+        ),
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
         log_file=Path(os.getenv("LOG_FILE", "logs/chaoxun.log")),
         screenshot_dir=Path(os.getenv("SCREENSHOT_DIR", "screenshots")),

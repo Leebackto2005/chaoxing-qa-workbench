@@ -25,6 +25,10 @@
 
 ## 环境要求
 
+官方测试增加了保护性停机：播放前及播放等待期间按 `PROTECTION_POLL_INTERVAL_SECONDS` 检查页面和允许访问的子框架，出现安全验证、频繁操作提示或本站 HTTP 401/403/429 时结束当前会话并记录原因。课程/章节操作前按 `PROTECTION_NAVIGATION_INTERVAL_SECONDS` 等待；章节播放失败后不再继续后续章节。Web 控制台的官方任务失败后按 `PROTECTION_FAILURE_COOLDOWN_SECONDS` 进入冷却，期间拒绝再次启动，不会自动重试。冷却仅对当前控制台进程有效，CLI 和其他进程不共享计时。
+
+这些机制用于减少重复操作和及时响应平台限制，不能保证账号不会被限制。保护参数有上下限：导航间隔为 1–60 秒，检查间隔为 0.5–10 秒，失败冷却为 0–86400 秒。页面关键词检测采用保守策略，课程正文出现相关词也可能触发停机；浏览器不能提供网络状态码时只能依靠页面提示。遇到误报请人工核查报告。
+
 - Python 3.8+；
 - Chrome、Edge 或 Firefox；
 - pip。
@@ -196,7 +200,8 @@ shuake/
 │   ├── styles.css           # 控制台视觉样式
 │   └── app.js               # 配置提交、状态轮询和日志展示
 ├── tests/
-│   └── test_smoke.py       # 最小回归检查
+│   ├── test_smoke.py       # 最小回归检查
+│   └── test_protection.py  # 账号保护行为检查
 ├── logs/
 ├── screenshots/
 └── progress.json
@@ -218,6 +223,9 @@ shuake/
 | `BROWSER_TIMEOUT` | 浏览器超时时间（秒） | `30` |
 | `LESSON_SECONDS` | 每节本地模拟学习等待时间 | `1.0` |
 | `PLAYBACK_MINUTES` | 官方模式每个章节的播放观测时间（分钟） | `10.0` |
+| `PROTECTION_NAVIGATION_INTERVAL_SECONDS` | 官方模式切换课程/章节前的等待时间，范围 1–60 秒 | `3.0` |
+| `PROTECTION_POLL_INTERVAL_SECONDS` | 官方模式播放期间检查限制提示的间隔，范围 0.5–10 秒 | `1.0` |
+| `PROTECTION_FAILURE_COOLDOWN_SECONDS` | 官方任务失败后的人工检查冷却时间，范围 0–86400 秒 | `300` |
 | `OFFICIAL_PLAYBACK_SCOPE` | `latest_unfinished` 或 `all_unfinished` | `latest_unfinished` |
 | `OFFICIAL_MAX_LESSONS` | 单次官方测试最多播放观测的章节数，范围 1–20 | `1` |
 | `OFFICIAL_TASK_POINTS` | 学习通目录 `.orangeNew` 任务点数，0 表示任意未完成 | `2` |

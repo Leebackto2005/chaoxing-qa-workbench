@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import threading
+import time
+import math
 from datetime import datetime
 from dataclasses import replace
 from http import HTTPStatus
@@ -28,6 +30,7 @@ class RunController:
         self.running = False
         self.status = self._initial_status()
         self.logs = []
+        self.official_cooldown_until = 0.0
 
     def _initial_status(self) -> Dict:
         return {
@@ -49,6 +52,7 @@ class RunController:
             result = dict(self.status)
             result["running"] = self.running
             result["logs"] = list(self.logs[-80:])
+            result["cooldown_seconds"] = max(0, math.ceil(self.official_cooldown_until - time.monotonic()))
             return result
 
     def _update(self, updates: Dict) -> None:
@@ -64,6 +68,9 @@ class RunController:
             if self.running:
                 raise RuntimeError("已有测试任务正在执行")
             run_settings = self._settings_from_payload(payload)
+            remaining = math.ceil(self.official_cooldown_until - time.monotonic())
+            if run_settings.target_mode == "official" and remaining > 0:
+                raise RuntimeError(f"官方任务处于失败冷却期，请 {remaining} 秒后人工检查再启动")
             self.running = True
             self.status = self._initial_status()
             self.status.update({"state": "running", "message": "Python 测试任务已启动"})
@@ -225,6 +232,10 @@ class RunController:
             })
         finally:
             with self.lock:
+                if settings.target_mode == "official" and self.status.get("state") == "failed":
+                    cooldown = self.settings.protection_failure_cooldown_seconds
+                    self.official_cooldown_until = time.monotonic() + cooldown
+                    self._update({"message": f"官方任务已停止，进入 {cooldown} 秒冷却；请检查登录状态或风控提示"})
                 self.running = False
 
     def _report(self, event: Dict) -> None:
@@ -311,6 +322,9 @@ class ControlHandler(BaseHTTPRequestHandler):
                 "headless": settings.headless,
                 "lesson_seconds": settings.lesson_seconds,
                 "playback_minutes": settings.playback_minutes,
+                "protection_navigation_interval_seconds": settings.protection_navigation_interval_seconds,
+                "protection_poll_interval_seconds": settings.protection_poll_interval_seconds,
+                "protection_failure_cooldown_seconds": settings.protection_failure_cooldown_seconds,
                 "official_playback_scope": settings.official_playback_scope,
                 "official_max_lessons": settings.official_max_lessons,
                 "official_task_points": settings.official_task_points,

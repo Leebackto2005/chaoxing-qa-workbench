@@ -15,6 +15,12 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import parse_qs, urljoin, urlsplit
 
 
+class ProtectiveStop(RuntimeError):
+    """End the current session when the site asks us to stop."""
+
+    suppress_screenshot = True
+
+
 class OfficialTestRunner:
     """Discover and exercise visible course media without writing study state."""
 
@@ -583,6 +589,24 @@ class OfficialTestRunner:
             self.driver.switch_to.default_content()
         return found["value"]
 
+    def _pause_media(self) -> None:
+        def visitor() -> None:
+            self.driver.execute_script(
+                """
+                document.querySelectorAll('video, audio').forEach((media) => {
+                  try { media.pause(); } catch (e) {}
+                });
+                """
+            )
+
+        try:
+            self.driver.switch_to.default_content()
+            self._walk_frames(visitor)
+        except Exception:
+            self.logger.exception("暂停当前媒体失败")
+        finally:
+            self.driver.switch_to.default_content()
+
     def _plan_lessons(self, course_lessons: List[Tuple[Dict[str, Any], List[Dict[str, Any]]]]) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
         """Choose a bounded, explicitly configured diagnostic scope.
 
@@ -636,51 +660,56 @@ class OfficialTestRunner:
         }
 
     def _play_context(self) -> Dict[str, Any]:
-        before = self._video_states()
-        control_found = self._click_play_control()
-        if control_found:
-            time.sleep(0.4)
-        videos_before_start = self._video_states()
-        video_found = bool(videos_before_start)
-        if video_found:
-            self._start_videos()
-            time.sleep(self.settings.playback_minutes * 60.0)
-        after = self._video_states()
-        deltas = []
-        for index, state in enumerate(after):
-            previous = before[index] if index < len(before) else {}
-            deltas.append(max(0.0, float(state.get("current_time", 0)) - float(previous.get("current_time", 0))))
-        played_seconds = round(max(deltas or [0.0]), 2)
-        issues = []
-        if not video_found:
-            issues.append("video_element_not_observed")
-            if not control_found:
-                issues.append("playback_control_not_observed")
-        if video_found and played_seconds <= 0:
-            issues.append("playback_time_not_observed")
-        observed_rate = max((float(state.get("playback_rate") or 0) for state in after), default=0.0)
-        return {
-            "control_found": control_found,
-            "video_found": video_found,
-            "playback_minutes_requested": self.settings.playback_minutes,
-            "playback_rate_requested": self.settings.official_playback_rate,
-            "playback_rate_observed": observed_rate,
-            "played_seconds_observed": played_seconds,
-            "video_states": after,
-            "status": "passed" if not issues else "failed",
-            "issues": issues,
-        }
+        try:
+            self._check_protection()
+            before = self._video_states()
+            control_found = self._click_play_control()
+            if control_found:
+                self._protected_wait(0.4)
+            videos_before_start = self._video_states()
+            video_found = bool(videos_before_start)
+            if video_found:
+                self._start_videos()
+                self._protected_wait(self.settings.playback_minutes * 60.0)
+            after = self._video_states()
+            deltas = []
+            for index, state in enumerate(after):
+                previous = before[index] if index < len(before) else {}
+                deltas.append(max(0.0, float(state.get("current_time", 0)) - float(previous.get("current_time", 0))))
+            played_seconds = round(max(deltas or [0.0]), 2)
+            issues = []
+            if not video_found:
+                issues.append("video_element_not_observed")
+                if not control_found:
+                    issues.append("playback_control_not_observed")
+            if video_found and played_seconds <= 0:
+                issues.append("playback_time_not_observed")
+            observed_rate = max((float(state.get("playback_rate") or 0) for state in after), default=0.0)
+            return {
+                "control_found": control_found,
+                "video_found": video_found,
+                "playback_minutes_requested": self.settings.playback_minutes,
+                "playback_rate_requested": self.settings.official_playback_rate,
+                "playback_rate_observed": observed_rate,
+                "played_seconds_observed": played_seconds,
+                "video_states": after,
+                "status": "passed" if not issues else "failed",
+                "issues": issues,
+            }
+        finally:
+            self._pause_media()
 
     def _play_lesson(self, lesson: Dict[str, Any]) -> Dict[str, Any]:
         from selenium.webdriver.common.by import By
 
+        self._check_protection()
         self._emit({"phase": "lesson", "lesson": lesson["name"], "message": f"检查并播放：{lesson['name']}"})
         if lesson.get("adapter") == "chaoxing_catalog":
             target = lesson.get("url") or self.driver.current_url
             if self._allowed_url(target) and self._clean_path(self.driver.current_url) != self._clean_path(target):
                 self.browser.open(target)
             clicked = self._click_chaoxing_catalog(int(lesson.get("catalog_index", 0) or 0))
-            time.sleep(self.settings.official_player_wait_seconds)
+            self._protected_wait(self.settings.official_player_wait_seconds)
             result = self._play_context()
             result["adapter"] = "chaoxing_catalog"
             result["task_points"] = lesson.get("task_points")
@@ -711,7 +740,7 @@ class OfficialTestRunner:
         return any(hint in text for hint in self.NETWORK_HINTS)
 
     def _record_network(self, url: str, status: Optional[int], source: str, resource_type: str = "") -> None:
-        if not self._interesting_network(url):
+        if status not in (401, 403, 429) and not self._interesting_network(url):
             return
         parsed = urlsplit(url)
         hostname = (parsed.hostname or "").lower().rstrip(".")
@@ -760,14 +789,41 @@ class OfficialTestRunner:
         return list(self._network_observations[-100:])
 
     def _risk_markers(self) -> List[str]:
-        try:
-            body_text = self.driver.execute_script(
+        texts = []
+
+        def visitor() -> None:
+            texts.append(self.driver.execute_script(
                 "return (document.body && document.body.innerText ? document.body.innerText : '').slice(0, 20000);"
-            ) or ""
-        except Exception:
-            body_text = ""
-        haystack = f"{body_text} {self.driver.current_url}".lower()
+            ) or "")
+
+        try:
+            self.driver.switch_to.default_content()
+            self._walk_frames(visitor)
+        finally:
+            self.driver.switch_to.default_content()
+        haystack = (" ".join(texts) + " " + self.driver.current_url).lower()
         return sorted({hint for hint in self.RISK_HINTS if hint.lower() in haystack})
+
+    def _check_protection(self) -> None:
+        observations = self._collect_network_observations()
+        markers = self._risk_markers()
+        blocked = sorted({item["status"] for item in observations if item.get("status") in (401, 403, 429)})
+        if not markers and not blocked:
+            return
+        reason = "检测到访问限制或安全验证，已停止本次任务，请人工检查"
+        if blocked:
+            reason += "（HTTP " + ", ".join(map(str, blocked)) + "）"
+        self._emit({"phase": "protection", "message": reason})
+        raise ProtectiveStop(reason)
+
+    def _protected_wait(self, seconds: float) -> None:
+        deadline = time.monotonic() + seconds
+        while True:
+            self._check_protection()
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return
+            time.sleep(min(self.settings.protection_poll_interval_seconds, remaining))
 
     def _base_report(self) -> Dict[str, Any]:
         return {
@@ -821,6 +877,7 @@ class OfficialTestRunner:
     def run(self) -> Dict[str, Any]:
         report = self._base_report()
         try:
+            self._check_protection()
             self._emit({"phase": "discover", "message": "正在读取官方测试课程"})
             courses = self._discover_courses()
             report["summary"]["discovered_courses"] = len(courses)
@@ -844,8 +901,11 @@ class OfficialTestRunner:
                     "message": f"读取课程章节：{course['name']}",
                 })
                 try:
+                    self._protected_wait(self.settings.protection_navigation_interval_seconds)
                     self.browser.open(course["url"])
+                    self._check_protection()
                     self._enter_chaoxing_player()
+                    self._check_protection()
                     lessons = self._discover_lessons()
                     course["lesson_count"] = len(lessons)
                     course["unfinished_count"] = sum(
@@ -868,6 +928,8 @@ class OfficialTestRunner:
                         report["summary"]["failed"] += 1
                         continue
                     course_lessons.append((course, lessons))
+                except ProtectiveStop:
+                    raise
                 except Exception as exc:
                     self.logger.exception("官方课程测试失败: %s", course["name"])
                     report["results"].append({
@@ -930,7 +992,10 @@ class OfficialTestRunner:
                     "message": f"开始有限播放观测：{lesson['name']}",
                 })
                 try:
+                    self._protected_wait(self.settings.protection_navigation_interval_seconds)
                     result = self._play_lesson(lesson)
+                except ProtectiveStop:
+                    raise
                 except Exception as exc:
                     self.logger.exception("官方章节测试失败: %s", lesson["name"])
                     result = {
@@ -963,6 +1028,13 @@ class OfficialTestRunner:
                     "total": report["summary"]["total"],
                     "message": f"播放结果：{lesson['name']} / {result.get('status', 'unknown')}",
                 })
+                if result.get("status") != "passed":
+                    self._emit({"phase": "protection", "message": "章节播放异常，已停止后续章节，请人工检查"})
+                    break
+        except ProtectiveStop as exc:
+            report["protection"] = {"stopped": True, "reason": str(exc)}
+            report["results"].append({"status": "failed", "issues": ["protective_stop"], "error": str(exc)})
+            report["summary"]["failed"] += 1
         except Exception as exc:
             self.logger.exception("官方测试发现阶段失败")
             report["results"].append({"status": "failed", "issues": ["discovery_exception"], "error": str(exc)})

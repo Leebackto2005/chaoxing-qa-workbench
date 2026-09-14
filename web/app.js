@@ -260,6 +260,8 @@ function renderReport(report) {
 
 function renderStatus(status) {
   const state = status.state || "idle";
+  const cooldownSeconds = Math.max(0, Number(status.cooldown_seconds) || 0);
+  const officialCooldown = ui.targetMode.value === "official" && cooldownSeconds > 0;
   const percent = Math.max(0, Math.min(100, Number(status.percent) || 0));
   ui.stateBadge.className = `state-badge ${state}`;
   ui.stateLabel.textContent = labels[state] || state;
@@ -271,9 +273,10 @@ function renderStatus(status) {
   ui.currentLesson.textContent = status.current_lesson || status.message || "等待 Python 执行器接管";
   ui.logOutput.textContent = status.logs && status.logs.length ? status.logs.join("\n") : "等待任务事件…";
   ui.logOutput.scrollTop = ui.logOutput.scrollHeight;
-  ui.runButton.disabled = Boolean(status.running);
+  ui.runButton.disabled = Boolean(status.running) || officialCooldown;
   renderReport(status.report);
-  if (state === "failed") setMessage(status.error || status.message, "error");
+  if (officialCooldown) setMessage(`官方保护冷却中，${cooldownSeconds} 秒后可人工检查并重新启动。`, "error");
+  else if (state === "failed") setMessage(status.error || status.message, "error");
   if (state === "completed") {
     const reportMessage = status.report && status.report.summary && status.report.summary.overall !== "passed"
       ? "测试完成，但没有新的可播放未完成章节。"
